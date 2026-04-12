@@ -1,0 +1,76 @@
+### Python ###
+# バイトコード (コンパイル済みファイル)
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 仮想環境 (Virtual Environments)
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# 配布・パッケージング関連
+dist/
+build/
+eggs/
+.eggs/
+*.egg-info/
+*.egg
+bin/
+lib/
+lib64/
+develop-eggs/
+sdist/
+var/
+wheels/
+share/python-wheels/
+
+# 設定・環境変数 (機密情報が含まれるため必ず除外)
+.env
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+
+# テスト・カバレッジ
+htmlcov/
+.tox/
+.nosexy/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.pytest_cache/
+.pytest/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# mypy / Pyre (型チェック)
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+
+### IDE / エディタ ###
+# VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# PyCharm / IntelliJ
+.idea/
+
+### OS関連 ###
+.DS_Store
+Thumbs.db
+
+# その他
+results/

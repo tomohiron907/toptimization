@@ -1,0 +1,70 @@
+# MBB (Messerschmitt-Bolkow-Blohm) beam — half-symmetry model
+#
+# A simply supported beam with a center load, modeled as half-domain
+# exploiting left-right symmetry.
+#
+# Left edge: x-roller (x fixed, y free)
+# Bottom-right corner: y-roller (y fixed, x free)
+# Load: downward point at top-left corner (center of full beam)
+#
+#   F
+#   v
+#   +--+--+--+--+...--+--+
+#   |                     |
+#   |      (half beam)    |
+#   |                     |
+#   +--+--+--+--+...--+--+
+#   ^x                   ^y
+#  (roller)            (roller)
+
+problem:
+  name: "MBB Beam 2D (half symmetry)"
+  dimension: 2
+
+domain:
+  nelx: 180
+  nely: 60
+  element_size: 1.0
+
+material:
+  E: 1.0
+  nu: 0.3
+  E_min: 1.0e-9
+
+boundary_conditions:
+  fixed:
+    # Left edge: x-roller (constrain x only)
+    - nodes:
+        type: "edge"
+        edge: "left"
+      dofs: ["x"]
+    # Bottom-right corner: y-roller (constrain y only)
+    - nodes:
+        type: "point"
+        corner: "bottom-right"
+      dofs: ["y"]
+
+loads:
+  - nodes:
+      type: "point"
+      corner: "top-left"
+    force: [0.0, -1.0]
+
+optimization:
+  volume_fraction: 0.5
+  penalty: 3.0
+  filter_radius: 2.4
+  filter_type: "density"
+  max_iterations: 300
+  tolerance: 0.01
+  move_limit: 0.2
+
+solver:
+  max_cg_iterations: 3000
+  cg_tolerance: 1.0e-8
+  preconditioner: "jacobi"
+
+output:
+  directory: "results/mbb_beam_2d"
+  save_interval: 10
+  format: "png"

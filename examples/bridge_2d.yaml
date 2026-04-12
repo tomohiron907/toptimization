@@ -1,0 +1,64 @@
+# Bridge problem
+#
+# Both bottom corners fixed. Distributed load on top edge (approximated
+# as point loads at each top-edge node). Classic bridge arch result.
+#
+#   F  F  F  F  F  F  F  F  F  (top edge distributed load)
+#   +--+--+--+--+--+--+--+--+
+#   |                         |
+#   |        bridge           |
+#   |                         |
+#   +--+--+--+--+--+--+--+--+
+#   ^                         ^
+#  fixed                    fixed
+
+problem:
+  name: "Bridge 2D"
+  dimension: 2
+
+domain:
+  nelx: 100
+  nely: 50
+  element_size: 1.0
+
+material:
+  E: 1.0
+  nu: 0.3
+  E_min: 1.0e-9
+
+boundary_conditions:
+  fixed:
+    - nodes:
+        type: "point"
+        corner: "bottom-left"
+      dofs: ["x", "y"]
+    - nodes:
+        type: "point"
+        corner: "bottom-right"
+      dofs: ["x", "y"]
+
+loads:
+  # Midpoint of top edge
+  - nodes:
+      type: "point"
+      location: [50, 50]
+    force: [0.0, -1.0]
+
+optimization:
+  volume_fraction: 0.4
+  penalty: 3.0
+  filter_radius: 2.0
+  filter_type: "density"
+  max_iterations: 200
+  tolerance: 0.01
+  move_limit: 0.2
+
+solver:
+  max_cg_iterations: 2000
+  cg_tolerance: 1.0e-8
+  preconditioner: "jacobi"
+
+output:
+  directory: "results/bridge_2d"
+  save_interval: 10
+  format: "png"

@@ -1,0 +1,59 @@
+# Classic cantilever beam
+#
+# Fixed on the left edge, point load at the center of the right edge.
+# Expected result: branching tree-like structure.
+#
+#   |<------- nelx=120 ------->|
+#   +--+--+--+--+--...--+--+--+  ^
+#   |XXXXXXXXXXXXXXXXXXXXX     |  |
+#   |XXXXXXXXXXXXXXXXXXXXXXXXXX|  nely=40
+#   |XXXXX  XXXXXXXXXXXXXXXX   |  |
+#   +--+--+--+--+--...--+--+--+  v
+#   ^                         ^
+#   fixed                     F (midpoint)
+
+problem:
+  name: "Cantilever Beam 2D"
+  dimension: 2
+
+domain:
+  nelx: 120
+  nely: 40
+  element_size: 1.0
+
+material:
+  E: 1.0
+  nu: 0.3
+  E_min: 1.0e-9
+
+boundary_conditions:
+  fixed:
+    - nodes:
+        type: "edge"
+        edge: "left"
+      dofs: ["x", "y"]
+
+loads:
+  - nodes:
+      type: "point"
+      location: [120, 20]   # right edge midpoint (node coords: x=nelx, y=nely/2)
+    force: [0.0, -1.0]
+
+optimization:
+  volume_fraction: 0.5
+  penalty: 3.0
+  filter_radius: 1.5
+  filter_type: "density"
+  max_iterations: 200
+  tolerance: 0.01
+  move_limit: 0.2
+
+solver:
+  max_cg_iterations: 2000
+  cg_tolerance: 1.0e-8
+  preconditioner: "jacobi"
+
+output:
+  directory: "results/cantilever_2d"
+  save_interval: 10
+  format: "png"

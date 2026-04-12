@@ -1,0 +1,34 @@
+[project]
+name = "toptimization"
+version = "0.1.0"
+description = "GPU-accelerated topology optimization using SIMP method"
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+
+dependencies = [
+    "taichi>=1.7.0",
+    "numpy>=1.24",
+    "pyyaml>=6.0",
+    "matplotlib>=3.7",
+    "scipy>=1.10",
+]
+
+[project.optional-dependencies]
+viz3d = ["pyvista>=0.42", "meshio>=5.3"]
+dev = ["pytest>=7.0", "pytest-cov"]
+
+[project.scripts]
+toptimization = "toptimization.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/toptimization"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+    "pytest-cov>=7.1.0",
+]

@@ -1,0 +1,45 @@
+# Small cantilever for quick testing (20x10 mesh)
+problem:
+  name: "Cantilever Small Test"
+  dimension: 2
+
+domain:
+  nelx: 20
+  nely: 10
+
+material:
+  E: 1.0
+  nu: 0.3
+  E_min: 1.0e-9
+
+boundary_conditions:
+  fixed:
+    - nodes:
+        type: "edge"
+        edge: "left"
+      dofs: ["x", "y"]
+
+loads:
+  - nodes:
+      type: "point"
+      location: [20, 5]
+    force: [0.0, -1.0]
+
+optimization:
+  volume_fraction: 0.5
+  penalty: 3.0
+  filter_radius: 1.5
+  filter_type: "density"
+  max_iterations: 50
+  tolerance: 0.01
+  move_limit: 0.2
+
+solver:
+  max_cg_iterations: 500
+  cg_tolerance: 1.0e-8
+  preconditioner: "jacobi"
+
+output:
+  directory: "results/cantilever_small"
+  save_interval: 10
+  format: "png"
