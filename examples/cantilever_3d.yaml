@@ -1,0 +1,62 @@
+# 3D Cantilever beam
+#
+# Fixed on the left face (x=0), point load at the center of the right face.
+# Expected result: 3D branching tree-like structure.
+#
+#        z
+#        ^   y
+#        |  /
+#        | /
+#        +-------> x
+#
+#   Left face (x=0): fully fixed
+#   Load: downward (-y) at center of right face (x=nelx, y=nely/2, z=nelz/2)
+#
+#   Domain: nelx=60 x nely=20 x nelz=20 = 24,000 elements
+
+problem:
+  name: "Cantilever Beam 3D"
+  dimension: 3
+
+domain:
+  nelx: 60
+  nely: 20
+  nelz: 20
+  element_size: 1.0
+
+material:
+  E: 1.0
+  nu: 0.3
+  E_min: 1.0e-9
+
+boundary_conditions:
+  fixed:
+    - nodes:
+        type: "face"
+        face: "left"
+      dofs: ["x", "y", "z"]
+
+loads:
+  - nodes:
+      type: "point"
+      location: [60, 10, 10]   # center of right face (x=nelx, y=nely/2, z=nelz/2)
+    force: [0.0, -1.0, 0.0]
+
+optimization:
+  volume_fraction: 0.3
+  penalty: 3.0
+  filter_radius: 1.5
+  filter_type: "density"
+  max_iterations: 100
+  tolerance: 0.01
+  move_limit: 0.2
+
+solver:
+  max_cg_iterations: 5000
+  cg_tolerance: 1.0e-8
+  preconditioner: "jacobi"
+
+output:
+  directory: "results/cantilever_3d"
+  save_interval: 10
+  format: "vtk"

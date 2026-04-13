@@ -21,6 +21,7 @@ def make_problem_2d(nelx=4, nely=3):
         volfrac=0.5, penalty=3.0, rmin=1.5,
         filter_type="density", max_iter=100, tol=0.01, move_limit=0.2,
         max_cg_iter=500, cg_tol=1e-8, preconditioner="jacobi",
+        solver_mode="scipy",
         output_dir=Path("results"),
         save_interval=10, output_format="png",
     )

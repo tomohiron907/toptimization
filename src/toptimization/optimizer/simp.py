@@ -48,6 +48,10 @@ def run(
     ti.init(arch=arch, default_fp=ti.f32, default_ip=ti.i32)
     print(f"[toptimization] Backend: {arch}")
 
+    # Determine solver mode
+    solver_mode = getattr(problem, 'solver_mode', 'scipy')
+    print(f"[toptimization] Solver mode: {solver_mode}")
+
     # ------------------------------------------------------------------ #
     # 2. Import Taichi-dependent modules AFTER ti.init()
     # ------------------------------------------------------------------ #
@@ -158,6 +162,7 @@ def run(
                 E_min=problem.E_min, penalty=problem.penalty, dim=problem.dim,
                 max_iter=problem.max_cg_iter, tol=problem.cg_tol,
                 preconditioner=problem.preconditioner, warm_start=(it > 1),
+                solver_mode=solver_mode,
             )
 
             # Compute sensitivities with rho_filt (still in F.rho slot)
@@ -180,6 +185,7 @@ def run(
                 E_min=problem.E_min, penalty=problem.penalty, dim=problem.dim,
                 max_iter=problem.max_cg_iter, tol=problem.cg_tol,
                 preconditioner=problem.preconditioner, warm_start=(it > 1),
+                solver_mode=solver_mode,
             )
             compliance = K.compute_sensitivity(
                 F.u, F.rho, F.dc, F.dv,

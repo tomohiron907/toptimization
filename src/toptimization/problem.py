@@ -52,6 +52,7 @@ class Problem:
     max_cg_iter: int
     cg_tol: float
     preconditioner: Literal["jacobi", "block_jacobi", "none"]
+    solver_mode: Literal["scipy", "taichi"]
 
     # Output
     output_dir: Path
@@ -121,6 +122,11 @@ def load_problem(yaml_path: str | Path) -> Problem:
         raise ValueError(
             f"preconditioner must be 'jacobi', 'block_jacobi', or 'none', got {preconditioner}"
         )
+    solver_mode = solver.get("mode", "scipy")
+    if solver_mode not in ("scipy", "taichi"):
+        raise ValueError(
+            f"solver mode must be 'scipy' or 'taichi', got {solver_mode}"
+        )
 
     output_dir = Path(output.get("directory", "results"))
     save_interval = int(output.get("save_interval", 10))
@@ -158,6 +164,7 @@ def load_problem(yaml_path: str | Path) -> Problem:
         max_cg_iter=max_cg_iter,
         cg_tol=cg_tol,
         preconditioner=preconditioner,
+        solver_mode=solver_mode,
         output_dir=output_dir,
         save_interval=save_interval,
         output_format=output_format,
