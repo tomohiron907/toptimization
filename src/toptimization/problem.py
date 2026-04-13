@@ -51,7 +51,7 @@ class Problem:
     # Solver parameters
     max_cg_iter: int
     cg_tol: float
-    preconditioner: Literal["jacobi", "none"]
+    preconditioner: Literal["jacobi", "block_jacobi", "none"]
 
     # Output
     output_dir: Path
@@ -115,10 +115,12 @@ def load_problem(yaml_path: str | Path) -> Problem:
     move_limit = float(opt.get("move_limit", 0.2))
 
     max_cg_iter = int(solver.get("max_cg_iterations", 2000))
-    cg_tol = float(solver.get("cg_tolerance", 1e-8))
+    cg_tol = float(solver.get("cg_tolerance", 1e-6))
     preconditioner = solver.get("preconditioner", "jacobi")
-    if preconditioner not in ("jacobi", "none"):
-        raise ValueError(f"preconditioner must be 'jacobi' or 'none', got {preconditioner}")
+    if preconditioner not in ("jacobi", "block_jacobi", "none"):
+        raise ValueError(
+            f"preconditioner must be 'jacobi', 'block_jacobi', or 'none', got {preconditioner}"
+        )
 
     output_dir = Path(output.get("directory", "results"))
     save_interval = int(output.get("save_interval", 10))

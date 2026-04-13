@@ -54,6 +54,7 @@ def run(
     from toptimization.fem import fields as F
     from toptimization.fem import kernels as K
     from toptimization.fem import solver as pcg
+    from toptimization.fem import preconditioner as PC
     from toptimization.optimizer import filter as filt
     from toptimization.optimizer import oc as oc_mod
     from toptimization.mesh import build_edof, element_centers
@@ -92,10 +93,14 @@ def run(
     )
 
     # ------------------------------------------------------------------ #
-    # 5. Precompute filter
+    # 5. Precompute filter and block Jacobi DOF count (if needed)
     # ------------------------------------------------------------------ #
     print(f"[toptimization] Precomputing filter (rmin={problem.rmin})...")
     filt.precompute_filter(problem, centers)
+
+    if problem.preconditioner == "block_jacobi":
+        print(f"[toptimization] Setting up block Jacobi preconditioner...")
+        PC.setup(F.edof, F.diag_count, problem.n_elem, problem.dim)
 
     # ------------------------------------------------------------------ #
     # 6. Initialize density and warm-start displacement
@@ -132,7 +137,6 @@ def run(
 
     compliance_history: list[float] = []
     volume_history: list[float] = []
-    use_jacobi = (problem.preconditioner == "jacobi")
 
     for it in range(1, problem.max_iter + 1):
         t0 = time.perf_counter()
@@ -153,7 +157,7 @@ def run(
             n_cg = pcg.solve(
                 E_min=problem.E_min, penalty=problem.penalty, dim=problem.dim,
                 max_iter=problem.max_cg_iter, tol=problem.cg_tol,
-                use_jacobi=use_jacobi, warm_start=(it > 1),
+                preconditioner=problem.preconditioner, warm_start=(it > 1),
             )
 
             # Compute sensitivities with rho_filt (still in F.rho slot)
@@ -175,7 +179,7 @@ def run(
             n_cg = pcg.solve(
                 E_min=problem.E_min, penalty=problem.penalty, dim=problem.dim,
                 max_iter=problem.max_cg_iter, tol=problem.cg_tol,
-                use_jacobi=use_jacobi, warm_start=(it > 1),
+                preconditioner=problem.preconditioner, warm_start=(it > 1),
             )
             compliance = K.compute_sensitivity(
                 F.u, F.rho, F.dc, F.dv,

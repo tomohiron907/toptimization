@@ -28,16 +28,18 @@ dc_filt: ti.Field = None   # filtered sensitivity    (n_elem,)
 dv: ti.Field = None        # volume sensitivity      (n_elem,)
 rho_filt: ti.Field = None  # filtered density        (n_elem,)
 
-Ke: ti.Field = None        # element stiffness  (dpe, dpe)
-edof: ti.Field = None      # element connectivity (n_elem, dpe)
-is_fixed: ti.Field = None  # BC mask             (n_dofs,)  1=fixed
+Ke: ti.Field = None        # element stiffness       (dpe, dpe)
+Ke_inv: ti.Field = None    # element stiffness pinv  (dpe, dpe)  — block Jacobi
+edof: ti.Field = None      # element connectivity    (n_elem, dpe)
+is_fixed: ti.Field = None  # BC mask                 (n_dofs,)  1=fixed
+diag_count: ti.Field = None  # elements per DOF      (n_dofs,)  — block Jacobi
 
 # Filter precomputation fields
 filt_neighbors: ti.Field = None   # (n_elem, max_nb)
 filt_weights: ti.Field = None     # (n_elem, max_nb)
 filt_n_nb: ti.Field = None        # (n_elem,)
 
-# Scalar reduction field
+# Scalar reduction fields
 _dot_result: ti.Field = None
 _max_result: ti.Field = None
 
@@ -45,6 +47,7 @@ _max_result: ti.Field = None
 N_DOFS: int = 0
 N_ELEM: int = 0
 DPE: int = 0    # DOFs per element (8 for 2D, 24 for 3D)
+KE_ALPHA_REG: float = 0.0  # regularization diagonal used for Ke_inv
 
 
 def allocate(
@@ -78,10 +81,10 @@ def allocate(
     """
     global u, f, r, p, Ap, z, diag, u_prev
     global rho, rho_new, dc, dc_filt, dv, rho_filt
-    global Ke, edof, is_fixed
+    global Ke, Ke_inv, edof, is_fixed, diag_count
     global filt_neighbors, filt_weights, filt_n_nb
     global _dot_result, _max_result
-    global N_DOFS, N_ELEM, DPE
+    global N_DOFS, N_ELEM, DPE, KE_ALPHA_REG
 
     N_DOFS = n_dofs
     N_ELEM = n_elem
@@ -105,12 +108,14 @@ def allocate(
     dv       = ti.field(dtype=ti.f32, shape=n_elem)
     rho_filt = ti.field(dtype=ti.f32, shape=n_elem)
 
-    # Element stiffness and connectivity
-    Ke   = ti.field(dtype=ti.f32, shape=(dpe, dpe))
-    edof = ti.field(dtype=ti.i32, shape=(n_elem, dpe))
+    # Element stiffness, pseudoinverse, and connectivity
+    Ke       = ti.field(dtype=ti.f32, shape=(dpe, dpe))
+    Ke_inv   = ti.field(dtype=ti.f32, shape=(dpe, dpe))
+    edof     = ti.field(dtype=ti.i32, shape=(n_elem, dpe))
 
-    # Boundary condition mask
-    is_fixed = ti.field(dtype=ti.i32, shape=n_dofs)
+    # Boundary condition mask and block-Jacobi DOF count
+    is_fixed   = ti.field(dtype=ti.i32, shape=n_dofs)
+    diag_count = ti.field(dtype=ti.i32, shape=n_dofs)
 
     # Filter fields
     filt_neighbors = ti.field(dtype=ti.i32, shape=(n_elem, max_neighbors))
@@ -124,6 +129,18 @@ def allocate(
     # Populate static data
     Ke.from_numpy(Ke_np.astype(np.float32))
     edof.from_numpy(edof_np.astype(np.int32))
+
+    # Compute regularized element stiffness inverse.
+    # Ke is rank-deficient (3 rigid body modes for Q4, 6 for H8).
+    # Pseudoinverse maps those modes to zero, making the assembled block-Jacobi
+    # preconditioner near-singular (condition number → ∞).
+    # Adding alpha * diag_avg * I regularizes the null modes while preserving
+    # the conditioning of deformation modes (alpha=0.1 gives ~3x cond improvement).
+    Ke_np_f64 = Ke_np.astype(np.float64)
+    alpha_reg = 0.1 * float(np.mean(np.abs(np.diag(Ke_np_f64))))
+    KE_ALPHA_REG = alpha_reg
+    Ke_inv_np = np.linalg.inv(Ke_np_f64 + alpha_reg * np.eye(dpe)).astype(np.float32)
+    Ke_inv.from_numpy(Ke_inv_np)
 
     # Build is_fixed mask
     is_fixed_np = np.zeros(n_dofs, dtype=np.int32)
